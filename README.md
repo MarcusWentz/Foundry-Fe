@@ -32,7 +32,7 @@ The FeDeployer is a pre-built contract that takes a filename and deploys the cor
 
 ## SimpleStore.Fe
 
-Here is a simple Fe contract called `SimpleStore.Fe`, which is stored within the `Fe_contracts` directory. Make sure to put all of your `.Fe` files in the `Fe_contracts` directory so that the Fe compiler knows where to look when compiling.
+Here is a simple Fe contract called `SimpleStore.Fe`, which is stored within the `fe_contracts` directory. Make sure to put all of your `.fe` files in the `fe_contracts` directory so that the Fe compiler knows where to look when compiling.
 
 ```rust
 contract SimpleStore {
@@ -72,32 +72,36 @@ interface SimpleStore {
 
 ## SimpleStore Test
 
-First, the file imports `ISimpleStore.sol` as well as the `FeDeployer.sol` contract.
+First, the file imports `ISimpleStore.sol` as well as the `Fe.sol` contract.
 
-To deploy the contract, simply create a new instance of `FeDeployer` and call `FeDeployer.deployContract(fileName)` method, passing in the file name of the contract you want to deploy. Additionally, if the contract requires constructor arguments you can pass them in by supplying an abi encoded representation of the constructor arugments, which looks like this `FeDeployer.deployContract(fileName, abi.encode(arg0, arg1, arg2...))`.
+To deploy the contract, simply create a new instance of `Fe` and call `Fe.deployContract(fileName)` method, passing in the file name of the contract you want to deploy. Additionally, if the contract requires constructor arguments you can pass them in by supplying an abi encoded representation of the constructor arugments, which looks like this `Fe.deployContract(fileName, abi.encode(arg0, arg1, arg2...))`.
 
 In this example, `SimpleStore` is passed in to deploy the `SimpleStore.fe` contract. The `deployContract` function compiles the Fe contract and deploys the newly compiled bytecode, returning the address that the contract was deployed to. Since the `SimpleStore.fe` takes one constructor argument, the argument is wrapped in `abi.encode()` and passed to the `deployContract` function as a second argument.
 
 The deployed address is then used to initialize the ISimpleStore interface. Once the interface has been initialized, your Fe contract can be used within Foundry like any other Solidity contract.
 
-To test any Fe contract deployed with FeDeployer, simply run `forge test`. Since `ffi` is set to `true` in the `foundry.toml` file, you can run `forge test` without needing to pass in the `--ffi` flag. You can also use additional flags as you would with any other Foundry project. For example: `forge test -f <url> -vvvv`.
+To test any Fe contract deployed with Fe, simply run `forge test`. Since `ffi` is set to `true` in the `foundry.toml` file, you can run `forge test` without needing to pass in the `--ffi` flag. You can also use additional flags as you would with any other Foundry project. For example: `forge test -f <url> -vvvv`.
 
 ```js
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.8.13;
+
 import "../../lib/ds-test/test.sol";
-import "../../lib/utils/FeDeployer.sol";
+import "../../lib/utils/Console.sol";
+import "../../lib/utils/Fe.sol";
 
 import "../ISimpleStore.sol";
 
 contract SimpleStoreTest is DSTest {
-    ///@notice create a new instance of FeDeployer
-    FeDeployer feDeployer = new FeDeployer();
 
     ISimpleStore simpleStore;
 
     function setUp() public {
+        Fe.compileFile("SimpleStore");
+
         ///@notice deploy a new instance of ISimplestore by passing in the address of the deployed Fe contract
         simpleStore = ISimpleStore(
-            feDeployer.deployContract("SimpleStore", abi.encode(1234))
+            Fe.deployContract("SimpleStore", abi.encode(1234))
         );
     }
 
@@ -114,11 +118,18 @@ contract SimpleStoreTest is DSTest {
         require(_val == val);
     }
 }
-
 ```
 
 
 <br>
+
+# Compiling Fe ingots
+
+Fe code can easily be splitted across multiple files via [ingots](https://fe-lang.org/docs/release_notes.html?highlight=ingot#features-11). The `Fe` helper supports compiling ingots via `Fe.compileIngot(ingotName)`.
+
+Check the `BasicIngot` example for more details.
+
+
 
 # Other Foundry Integrations
 

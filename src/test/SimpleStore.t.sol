@@ -3,20 +3,20 @@ pragma solidity >=0.8.13;
 
 import "../../lib/ds-test/test.sol";
 import "../../lib/utils/Console.sol";
-import "../../lib/utils/FeDeployer.sol";
+import "../../lib/utils/Fe.sol";
 
 import "../ISimpleStore.sol";
 
 contract SimpleStoreTest is DSTest {
-    ///@notice create a new instance of FeDeployer
-    FeDeployer feDeployer = new FeDeployer();
 
     ISimpleStore simpleStore;
 
     function setUp() public {
+        Fe.compileFile("SimpleStore");
+
         ///@notice deploy a new instance of ISimplestore by passing in the address of the deployed Fe contract
         simpleStore = ISimpleStore(
-            feDeployer.deployContract("SimpleStore", abi.encode(1234))
+            Fe.deployContract("SimpleStore", abi.encode(1234))
         );
     }
 

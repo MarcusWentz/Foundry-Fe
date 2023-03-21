@@ -7,30 +7,42 @@ interface _CheatCodes {
     function envString(string calldata key) external returns (string memory);
 }
 
-contract FeDeployer {
-    address constant HEVM_ADDRESS =
-        address(bytes20(uint160(uint256(keccak256("hevm cheat code")))));
+address constant HEVM_ADDRESS = address(bytes20(uint160(uint256(keccak256("hevm cheat code")))));
+_CheatCodes constant cheatCodes = _CheatCodes(HEVM_ADDRESS);
 
-    /// @notice Initializes cheat codes in order to use ffi to compile Fe contracts
-    _CheatCodes cheatCodes = _CheatCodes(HEVM_ADDRESS);
 
-    ///@notice Compiles a Fe contract and returns the address that the contract was deployeod to
-    ///@notice If deployment fails, an error will be thrown
-    ///@param fileName - The file name of the Fe contract. For example, the file name for "SimpleStore.fe" is "SimpleStore"
-    ///@return deployedAddress - The address that the contract was deployed to
-
-    function deployContract(string memory fileName) public returns (address) {
-        ///@notice create a list of strings with the commands necessary to compile Fe contracts
+library Fe {
+    ///@notice Compiles a single Fe file
+    ///@param fileName - The file name without the .fe extension. For example, the file name for "SimpleStore.fe" is "SimpleStore"
+    function compileFile(string memory fileName) public {
         string[] memory compile_cmds = new string[](4);
         compile_cmds[0] = cheatCodes.envString("FE_PATH");
         compile_cmds[1] = "build";
         compile_cmds[2] = "--overwrite";
         compile_cmds[3] = string.concat("fe_contracts/", fileName, ".fe");
         cheatCodes.ffi(compile_cmds);
-        
+    }
+
+    ///@notice Compiles a Fe ingot
+    ///@param ingotName - The ingot name
+    function compileIngot(string memory ingotName) public {
+        string[] memory compile_cmds = new string[](4);
+        compile_cmds[0] = cheatCodes.envString("FE_PATH");
+        compile_cmds[1] = "build";
+        compile_cmds[2] = "--overwrite";
+        compile_cmds[3] = string.concat("fe_contracts/", ingotName);
+        cheatCodes.ffi(compile_cmds);
+    }
+
+    ///@notice Compiles a Fe contract and returns the address that the contract was deployeod to
+    ///@notice If deployment fails, an error will be thrown
+    ///@param contractName - The name of the Fe contract.
+    ///@return deployedAddress - The address that the contract was deployed to
+
+    function deployContract(string memory contractName) public returns (address) {
         string[] memory cmds = new string[](2);
         cmds[0] = "cat";
-        cmds[1] = string.concat("output/", fileName, "/", fileName, ".bin");
+        cmds[1] = string.concat("output/", contractName, "/", contractName, ".bin");
 
         ///@notice compile the Fe contract and return the bytecode
         bytes memory bytecode = cheatCodes.ffi(cmds);
@@ -53,23 +65,15 @@ contract FeDeployer {
 
     ///@notice Compiles a Fe contract with constructor arguments and returns the address that the contract was deployeod to
     ///@notice If deployment fails, an error will be thrown
-    ///@param fileName - The file name of the Fe contract. For example, the file name for "SimpleStore.fe" is "SimpleStore"
+    ///@param contractName - The file name of the Fe contract.
     ///@return deployedAddress - The address that the contract was deployed to
-    function deployContract(string memory fileName, bytes calldata args)
+    function deployContract(string memory contractName, bytes calldata args)
         public
         returns (address)
     {
-        ///@notice create a list of strings with the commands necessary to compile Fe contracts
-        string[] memory compile_cmds = new string[](4);
-        compile_cmds[0] = cheatCodes.envString("FE_PATH");
-        compile_cmds[1] = "build";
-        compile_cmds[2] = "--overwrite";
-        compile_cmds[3] = string.concat("fe_contracts/", fileName, ".fe");
-        cheatCodes.ffi(compile_cmds);
-        
         string[] memory cmds = new string[](2);
         cmds[0] = "cat";
-        cmds[1] = string.concat("output/", fileName, "/", fileName, ".bin");
+        cmds[1] = string.concat("output/", contractName, "/", contractName, ".bin");
 
         ///@notice compile the Fe contract and return the bytecode
         bytes memory _bytecode = cheatCodes.ffi(cmds);
