@@ -7,7 +7,7 @@ import "../../lib/utils/Fe.sol";
 
 import "../IFoo.sol";
 
-contract SimpleStoreTest is DSTest {
+contract BasicIngotTest is DSTest {
 
     IFoo foo;
 
